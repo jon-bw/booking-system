@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Doto:wght@400;500;600;700&display=swap');
 
 @theme {
   --font-sans: 'Space Grotesk', system-ui, sans-serif;
