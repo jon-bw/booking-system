@@ -47,6 +47,12 @@ export default function TenantLayout() {
               Browse
             </Link>
             <Link
+              to={`/${tenant.slug}/dashboard`}
+              className="font-mono uppercase rounded-full border border-border px-5 py-2 text-xs text-text hover:bg-surface hover:text-accent transition-colors"
+            >
+              Dashboard
+            </Link>
+            <Link
               to={`/admin/${tenant.slug}`}
               className="font-mono uppercase rounded-full border border-border px-5 py-2 text-xs text-text hover:bg-surface hover:text-accent transition-colors"
             >

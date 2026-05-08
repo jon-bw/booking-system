@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { Search } from 'lucide-react';
 
 export default function HomePage() {
+  const { profile, isAuthenticated } = useAuth();
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -32,7 +34,11 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-10">
           <h1 className="font-display text-4xl text-text">Booking System</h1>
           <p className="font-mono uppercase text-xs text-text-muted mt-2">
-            Select a tenant to continue
+            {isAuthenticated && profile?.role !== 'user'
+              ? profile?.role === 'superadmin'
+                ? 'All tenants (superadmin)'
+                : 'Your tenants'
+              : 'Select a tenant to continue'}
           </p>
         </div>
       </header>
@@ -66,7 +72,7 @@ export default function HomePage() {
             {filtered.map((tenant) => (
               <Link
                 key={tenant.id}
-                to={`/${tenant.slug}`}
+                to={`/${tenant.slug}/dashboard`}
                 className="group block bg-surface border border-border hover:border-accent transition-colors p-6 space-y-3"
               >
                 <h2 className="font-sans text-lg font-medium text-text group-hover:text-accent transition-colors">

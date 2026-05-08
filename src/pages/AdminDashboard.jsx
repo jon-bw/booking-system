@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Plus, Trash2, ArrowLeft, Users } from 'lucide-react';
 import { api } from '../api/client.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 function formatDate(ts) {
   return new Date(ts).toLocaleString();
@@ -18,14 +19,19 @@ function StatusBadge({ status }) {
 
 export default function AdminDashboard() {
   const { tenantSlug } = useParams();
-  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' or 'bookings'
+  const { user, profile, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'bookings' | 'users'
   const [tenant, setTenant] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoom, setNewRoom] = useState({ name: '', capacity: '', pricePerHour: '' });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({ email: '', password: '', role: 'user' });
+  const [userMessage, setUserMessage] = useState('');
 
   // Load tenant
   useEffect(() => {
@@ -39,8 +45,13 @@ export default function AdminDashboard() {
           .finally(() => {
             api.listBookings(tenantSlug)
               .then((data) => setBookings(Array.isArray(data.data) ? data.data : []))
-              .finally(() => setLoading(false))
-              .catch(() => setLoading(false));
+              .finally(() => {
+                fetch(`/api/users`, { credentials: 'include' })
+                  .then((r) => r.json())
+                  .then((d) => { if (d.success) setUsers(d.data); })
+                  .finally(() => setLoading(false))
+                  .catch(() => setLoading(false));
+              });
           });
       })
       .catch(() => setLoading(false));
@@ -75,6 +86,39 @@ export default function AdminDashboard() {
     try {
       await api.deleteBooking(tenantSlug, id);
       setBookings((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleAddUser = async () => {
+    setUserMessage('');
+    setError('');
+    try {
+      if (!newUser.email || !newUser.password) {
+        setError('Email and password are required');
+        return;
+      }
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: newUser.email,
+          password: newUser.password,
+          role: newUser.role,
+          tenantId: tenant?.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to create user');
+      } else {
+        setUserMessage('User created successfully');
+        setUsers((prev) => [...prev, data.data]);
+        setNewUser({ email: '', password: '', role: 'user' });
+        setShowAddUser(false);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -121,8 +165,18 @@ export default function AdminDashboard() {
             <p className="font-mono text-xs text-text-muted mt-1">/{tenant.slug}</p>
           </div>
 
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-xs text-text-muted capitalize">{profile?.role}</span>
+            <button
+              onClick={logout}
+              className="font-mono uppercase text-xs border border-border rounded-full px-4 py-2 hover:bg-surface transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-6 pb-4 flex gap-2">
           {/* Tabs */}
-          <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('rooms')}
               className={`font-mono uppercase rounded-full border px-5 py-2 text-xs transition-colors ${
@@ -143,14 +197,28 @@ export default function AdminDashboard() {
             >
               Bookings
             </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`font-mono uppercase rounded-full border px-5 py-2 text-xs transition-colors ${
+                activeTab === 'users'
+                  ? 'border-accent text-accent'
+                  : 'border-border text-text hover:bg-surface hover:text-accent'
+              }`}
+            >
+              Users
+            </button>
           </div>
-        </div>
       </header>
 
       {/* Error banner */}
       {error && (
         <div className="max-w-6xl mx-auto px-6 pt-4">
           <p className="font-mono text-xs text-destructive">{error}</p>
+        </div>
+      )}
+      {userMessage && (
+        <div className="max-w-6xl mx-auto px-6 pt-4">
+          <p className="font-mono text-xs text-green-500">{userMessage}</p>
         </div>
       )}
 
@@ -335,6 +403,113 @@ export default function AdminDashboard() {
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ USERS TAB ═══ */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-mono uppercase text-xs text-text-muted">
+                {users.length} user{users.length !== 1 ? 's' : ''}
+              </h2>
+              {profile?.role === 'admin' && (
+                <button
+                  onClick={() => setShowAddUser(!showAddUser)}
+                  className="font-mono uppercase rounded-full border border-border px-4 py-2 text-xs text-text hover:bg-surface hover:border-accent hover:text-accent transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add User
+                </button>
+              )}
+            </div>
+
+            {/* Add user form */}
+            {showAddUser && profile?.role === 'admin' && (
+              <div className="bg-surface border border-border p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="font-mono uppercase text-xs text-text-muted">Email</label>
+                    <input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      placeholder="user@example.com"
+                      className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-mono uppercase text-xs text-text-muted">Password</label>
+                    <input
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-mono uppercase text-xs text-text-muted">Role</label>
+                    <select
+                      value={newUser.role}
+                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                      className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent"
+                    >
+                      <option value="user">User</option>
+                      <option value="manager">Manager</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddUser}
+                    className="font-mono uppercase rounded-full border border-accent px-6 py-2 text-xs text-accent hover:bg-accent hover:text-white transition-colors"
+                  >
+                    Create User
+                  </button>
+                  <button
+                    onClick={() => setShowAddUser(false)}
+                    className="font-mono uppercase rounded-full border border-border px-6 py-2 text-xs text-text hover:bg-surface transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Users table */}
+            <div className="bg-surface border border-border">
+              <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 font-mono text-xs uppercase text-text-muted border-b border-border">
+                <div className="col-span-4">User ID</div>
+                <div className="col-span-4">Role</div>
+                <div className="col-span-4">Tenant</div>
+              </div>
+
+              {users.length === 0 ? (
+                <div className="px-6 py-16 text-center">
+                  <p className="font-mono uppercase text-sm text-text-muted">No users</p>
+                </div>
+              ) : (
+                users.map((u, i) => (
+                  <div
+                    key={u.userId}
+                    className={`grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 px-6 py-4 ${
+                      i !== users.length - 1 ? 'border-b border-border' : ''
+                    }`}
+                  >
+                    <div className="col-span-4">
+                      <p className="text-text font-medium font-mono text-sm">{u.userId}</p>
+                    </div>
+                    <div className="col-span-4">
+                      <span className="font-mono text-sm text-text-muted capitalize">{u.role}</span>
+                    </div>
+                    <div className="col-span-4">
+                      <span className="font-mono text-sm text-text-muted">{u.tenantId ?? '-'}</span>
                     </div>
                   </div>
                 ))

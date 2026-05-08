@@ -1,21 +1,14 @@
 // ── Seeding Script ──────────────────────────────────────────────────────────
 // Run after pushing schema with: bun run db:push
-// Usage: bun run seed
+// Usage: bun run db:seed
 //
 // Note: This script inserts seed data only. Schema must be
 // created beforehand via `drizzle-kit push` or similar migration tools.
-import { Database } from 'bun:sqlite';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { resolve } from 'path';
-import * as schema from './schema.js';
 
-const dbPath = resolve(import.meta.dir, '..', 'data.sqlite');
-const sqlite = new Database(dbPath);
-sqlite.run('PRAGMA journal_mode=WAL;');
-sqlite.run('PRAGMA foreign_keys=ON;');
-const db = drizzle(sqlite, { schema });
-
-import { tenants, rooms, bookings } from './schema.js';
+import { db } from './db/index';
+import { tenants, rooms, bookings, userProfiles } from './db/schema';
+import { auth } from './auth';
+import { eq } from 'drizzle-orm';
 
 console.log('Inserting seed data...\n');
 
@@ -64,7 +57,61 @@ await db.insert(bookings).values([
   { roomId: nl1.id, tenantId: neonLounge.id, startTime: now + 44*hrMs, endTime: now + 47*hrMs, customerName: 'Ivy Wu', status: 'pending', createdAt: ts, updatedAt: ts },
   { roomId: nl2.id, tenantId: neonLounge.id, startTime: now + 18*hrMs, endTime: now + 22*hrMs, customerName: 'Jack Liu', status: 'confirmed', createdAt: ts, updatedAt: ts },
 ]);
-console.log('✅ 10 bookings created\n');
+console.log('✅ 10 bookings created');
+
+// Create initial superadmin
+const superadminEmail = 'superadmin@example.com';
+const superadminPassword = 'superadmin123';
+
+try {
+  const result: any = await auth.api.signUpEmail({
+    body: { email: superadminEmail, password: superadminPassword, name: 'Superadmin' },
+  });
+  const userId = result?.user?.id ?? result?.id;
+  if (userId) {
+    await db.update(userProfiles)
+      .set({ role: 'superadmin' })
+      .where(eq(userProfiles.userId, userId));
+    console.log('✅ Superadmin created:', superadminEmail);
+  }
+} catch (err: any) {
+  if (err.message?.includes('already exists')) {
+    console.log('ℹ️  Superadmin already exists');
+  } else {
+    console.error('❌ Failed to create superadmin:', err.message);
+  }
+}
+
+// Create an admin account for each tenant
+const tenantAdmins = [
+  { tenant: partyPalace, email: 'admin@partypalace.com', password: 'admin123', name: 'Party Palace Admin' },
+  { tenant: zenSpace, email: 'admin@zenspace.com', password: 'admin123', name: 'Zen Space Admin' },
+  { tenant: neonLounge, email: 'admin@neonlounge.com', password: 'admin123', name: 'Neon Lounge Admin' },
+];
+
+for (const { tenant, email, password, name } of tenantAdmins) {
+  try {
+    const result: any = await auth.api.signUpEmail({
+      body: { email, password, name },
+    });
+    const userId = result?.user?.id ?? result?.id;
+    if (userId) {
+      await db.update(userProfiles)
+        .set({ role: 'admin', tenantId: tenant.id })
+        .where(eq(userProfiles.userId, userId));
+      await db.update(tenants)
+        .set({ ownerId: userId })
+        .where(eq(tenants.id, tenant.id));
+      console.log(`✅ Admin created for ${tenant.name}:`, email);
+    }
+  } catch (err: any) {
+    if (err.message?.includes('already exists')) {
+      console.log(`ℹ️  Admin for ${tenant.name} already exists`);
+    } else {
+      console.error(`❌ Failed to create admin for ${tenant.name}:`, err.message);
+    }
+  }
+}
 
 const t = await db.select().from(tenants);
 const r = await db.select().from(rooms);
@@ -75,5 +122,3 @@ console.log(`│ rooms    │ ${String(r.length).padEnd(26)} │`);
 console.log(`│ bookings │ ${String(b.length).padEnd(26)} │`);
 console.log(`└──────────┴────────────────────────────┘`);
 console.log('\nSeeding complete! 🎉');
-
-sqlite.close();
