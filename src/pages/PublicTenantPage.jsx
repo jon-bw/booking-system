@@ -89,7 +89,7 @@ export default function PublicTenantPage() {
       );
     }
     const config = typeof block.config === 'string' ? JSON.parse(block.config) : (block.config || {});
-    const props = block.blockType === 'room_list' ? { config, tenantSlug: slug } : { config };
+    const props = block.blockType === 'room_list' ? { config, tenantSlug } : { config };
     return <Component key={block.id} {...props} />;
   };
 
