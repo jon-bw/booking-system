@@ -24,14 +24,14 @@ const BLOCK_COMPONENTS = {
 };
 
 export default function PublicTenantPage() {
-  const { slug } = useParams();
+  const { tenantSlug } = useParams();
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!slug) return;
-    api.getPublicPage(slug)
+    if (!tenantSlug) return;
+    api.getPublicPage(tenantSlug)
       .then((data) => {
         setBlocks(Array.isArray(data.data) ? data.data : []);
       })
@@ -39,7 +39,7 @@ export default function PublicTenantPage() {
         setError(err.message || 'Failed to load page');
       })
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [tenantSlug]);
 
   if (loading) {
     return (
