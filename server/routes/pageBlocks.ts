@@ -77,6 +77,32 @@ router.post(
   }
 );
 
+// PATCH /api/tenants/:tenantSlug/page-blocks/reorder — reorder blocks (manager+)
+// IMPORTANT: Must come before /:id to avoid "reorder" being captured as :id param
+router.patch(
+  '/reorder',
+  authMiddleware,
+  requireRole('manager', 'admin', 'superadmin'),
+  requireTenantAccess,
+  zValidator('json', reorderSchema),
+  async (c) => {
+    const tenantId = c.get('tenantId');
+    const { items } = await c.req.valid('json');
+
+    for (const item of items) {
+      await db.update(pageBlocks)
+        .set({ sortOrder: item.sortOrder })
+        .where(and(eq(pageBlocks.id, item.id), eq(pageBlocks.tenantId, tenantId)));
+    }
+
+    const blocks = await db.select()
+      .from(pageBlocks)
+      .where(eq(pageBlocks.tenantId, tenantId))
+      .orderBy(asc(pageBlocks.sortOrder));
+    return c.json({ success: true, data: blocks });
+  }
+);
+
 // PATCH /api/tenants/:tenantSlug/page-blocks/:id — update block (manager+)
 router.patch(
   '/:id',
@@ -125,31 +151,6 @@ router.delete(
 
     await db.delete(pageBlocks).where(eq(pageBlocks.id, blockId));
     return c.json({ success: true, message: 'Block deleted' });
-  }
-);
-
-// PATCH /api/tenants/:tenantSlug/page-blocks/reorder — reorder blocks (manager+)
-router.patch(
-  '/reorder',
-  authMiddleware,
-  requireRole('manager', 'admin', 'superadmin'),
-  requireTenantAccess,
-  zValidator('json', reorderSchema),
-  async (c) => {
-    const tenantId = c.get('tenantId');
-    const { items } = await c.req.valid('json');
-
-    for (const item of items) {
-      await db.update(pageBlocks)
-        .set({ sortOrder: item.sortOrder })
-        .where(and(eq(pageBlocks.id, item.id), eq(pageBlocks.tenantId, tenantId)));
-    }
-
-    const blocks = await db.select()
-      .from(pageBlocks)
-      .where(eq(pageBlocks.tenantId, tenantId))
-      .orderBy(asc(pageBlocks.sortOrder));
-    return c.json({ success: true, data: blocks });
   }
 );
 
