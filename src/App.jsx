@@ -11,6 +11,8 @@ import TenantDashboard from './pages/TenantDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import SuperadminDashboard from './pages/SuperadminDashboard.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import PublicTenantPage from './pages/PublicTenantPage.jsx';
+import BlockEditorPage from './pages/BlockEditorPage.jsx';
 
 function NotFound() {
   return (
@@ -97,6 +99,24 @@ export default function App() {
                   <TenantAdminGuard>
                     <AdminDashboard />
                   </TenantAdminGuard>
+                </AuthGuard>
+              </TenantProvider>
+            }
+          />
+          <Route
+            path="/tenants/:slug"
+            element={
+              <TenantProvider>
+                <PublicTenantPage />
+              </TenantProvider>
+            }
+          />
+          <Route
+            path="/tenants/:slug/blocks"
+            element={
+              <TenantProvider>
+                <AuthGuard>
+                  <BlockEditorPage />
                 </AuthGuard>
               </TenantProvider>
             }

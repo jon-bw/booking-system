@@ -6,7 +6,7 @@
 // created beforehand via `drizzle-kit push` or similar migration tools.
 
 import { db } from './db/index';
-import { tenants, rooms, bookings, userProfiles } from './db/schema';
+import { tenants, rooms, bookings, userProfiles, pageBlocks } from './db/schema';
 import { auth } from './auth';
 import { eq } from 'drizzle-orm';
 
@@ -113,12 +113,40 @@ for (const { tenant, email, password, name } of tenantAdmins) {
   }
 }
 
+// ── Page Blocks (sample blocks for each tenant) ─────────────────────────────
+const blockTs = Date.now();
+
+// Party Palace: hero + room_list + contact
+await db.insert(pageBlocks).values([
+  { tenantId: partyPalace.id, blockType: 'hero', config: { title: 'Party Palace', subtitle: 'The ultimate celebration venue for every occasion', ctaText: 'Browse Rooms', ctaLink: `/${partyPalace.slug}` }, sortOrder: 0, isVisible: true, createdAt: blockTs },
+  { tenantId: partyPalace.id, blockType: 'room_list', config: { title: 'Our Spaces', showPrices: true, showCapacity: true }, sortOrder: 1, isVisible: true, createdAt: blockTs },
+  { tenantId: partyPalace.id, blockType: 'contact', config: { title: 'Contact Us', email: 'hello@partypalace.com', phone: '+1 555-0100', address: '123 Celebration Ave, New York, NY' }, sortOrder: 2, isVisible: true, createdAt: blockTs },
+]);
+
+// Zen Space: hero + room_list + contact
+await db.insert(pageBlocks).values([
+  { tenantId: zenSpace.id, blockType: 'hero', config: { title: 'Zen Space', subtitle: 'Find your calm in our curated wellness studios', ctaText: 'Explore Rooms', ctaLink: `/${zenSpace.slug}` }, sortOrder: 0, isVisible: true, createdAt: blockTs },
+  { tenantId: zenSpace.id, blockType: 'room_list', config: { title: 'Our Studios', showPrices: true, showCapacity: true }, sortOrder: 1, isVisible: true, createdAt: blockTs },
+  { tenantId: zenSpace.id, blockType: 'contact', config: { title: 'Reach Out', email: 'info@zenspace.com', phone: '+1 555-0200', address: '456 Mindful Lane, Los Angeles, CA' }, sortOrder: 2, isVisible: true, createdAt: blockTs },
+]);
+
+// Neon Lounge: hero + room_list + contact
+await db.insert(pageBlocks).values([
+  { tenantId: neonLounge.id, blockType: 'hero', config: { title: 'Neon Lounge', subtitle: 'Where the night comes alive', ctaText: 'See Our Spaces', ctaLink: `/${neonLounge.slug}` }, sortOrder: 0, isVisible: true, createdAt: blockTs },
+  { tenantId: neonLounge.id, blockType: 'room_list', config: { title: 'Venues', showPrices: true, showCapacity: true }, sortOrder: 1, isVisible: true, createdAt: blockTs },
+  { tenantId: neonLounge.id, blockType: 'contact', config: { title: 'Get in Touch', email: 'vibes@neonlounge.com', phone: '+1 555-0300', address: '789 Electric Blvd, Chicago, IL' }, sortOrder: 2, isVisible: true, createdAt: blockTs },
+]);
+
+console.log('✅ 9 page blocks created (3 per tenant)');
+
 const t = await db.select().from(tenants);
 const r = await db.select().from(rooms);
 const b = await db.select().from(bookings);
+const pb = await db.select().from(pageBlocks);
 console.log(`┌──────────┬────────────────────────────┐`);
 console.log(`│ tenants  │ ${String(t.length).padEnd(26)} │`);
 console.log(`│ rooms    │ ${String(r.length).padEnd(26)} │`);
 console.log(`│ bookings │ ${String(b.length).padEnd(26)} │`);
+console.log(`│ page_blk │ ${String(pb.length).padEnd(26)} │`);
 console.log(`└──────────┴────────────────────────────┘`);
 console.log('\nSeeding complete! 🎉');

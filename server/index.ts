@@ -7,6 +7,7 @@ import tenantRoutes from './routes/tenants.js';
 import roomRoutes from './routes/rooms.js';
 import bookingRoutes from './routes/bookings.js';
 import userRoutes from './routes/users.js';
+import pageBlockRoutes from './routes/pageBlocks.js';
 
 const app = new Hono();
 
@@ -25,9 +26,29 @@ app.get('/health', (c) => c.json({ status: 'ok', uptime: process.uptime() }));
 // ── Auth Routes ────────────────────────────────────────────────────────────
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 
+// ── Public Tenant Page ──────────────────────────────────────────────────────
+app.get('/api/tenants/:tenantSlug/page', tenantMiddleware, async (c) => {
+  const tenantId = c.get('tenantId');
+  const { eq: _eq, and: _and, asc: _asc } = await import('drizzle-orm');
+  const { pageBlocks } = await import('./db/schema.js');
+  const { db } = await import('./db/index.js');
+  const blocks = await db
+    .select()
+    .from(pageBlocks)
+    .where(_and(_eq(pageBlocks.tenantId, tenantId), _eq(pageBlocks.isVisible, true)))
+    .orderBy(_asc(pageBlocks.sortOrder));
+  return c.json({ success: true, data: blocks });
+});
+
 // ── Public Tenant Routes ───────────────────────────────────────────────────
 app.route('/api/tenants', tenantRoutes);
 app.route('/api/users', userRoutes);
+
+// ── Admin: Page Block Routes (manager+) ─────────────────────────────────────
+app.use('/api/tenants/:tenantSlug/page-blocks/*', tenantMiddleware);
+app.use('/api/tenants/:tenantSlug/page-blocks/:id', tenantMiddleware);
+app.use('/api/tenants/:tenantSlug/page-blocks/reorder', tenantMiddleware);
+app.route('/api/tenants/:tenantSlug/page-blocks', pageBlockRoutes);
 
 // ── Tenant-Scoped Routes ──────────────────────────────────────────────────
 app.use('/api/tenants/:tenantSlug/rooms/*', tenantMiddleware);

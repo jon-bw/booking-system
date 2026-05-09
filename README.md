@@ -4,21 +4,23 @@ A multi-tenant room booking platform with role-based access control powered by [
 
 ## Features
 
-- **Multi-tenant architecture** — each tenant has its own rooms and bookings
-- **RBAC permissions** — superadmin, admin, manager, and user roles
+- **Multi-tenant architecture** — each tenant has its own rooms and bookings, isolated by slug
+- **RBAC permissions** — superadmin, admin, manager, and user roles with scoped access
 - **Room management** — create, update, soft-delete rooms per tenant
-- **Booking system** — availability checking, conflict prevention, status tracking
+- **Booking system** — availability checking, conflict prevention, status lifecycle (pending → confirmed → completed/cancelled)
 - **Admin dashboards** — tenant-scoped admin panel + global superadmin panel
+- **Static file serving** — SPA fallback with production-ready static assets in `dist/`
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, React Router, Tailwind CSS, Vite |
+| Frontend | React 19, React Router v7, Tailwind CSS v4, Vite 8, Lucide Icons |
 | Backend | Hono (Bun runtime) |
-| ORM | Drizzle ORM |
-| Database | SQLite (`bun:sqlite` for Drizzle, better-auth manages its own tables) |
-| Auth | better-auth with email/password |
+| ORM | Drizzle ORM 0.44 + drizzle-kit |
+| Database | SQLite (`bun:sqlite`) |
+| Auth | better-auth v1.6 with email/password |
+| Validation | Zod v4 + `@hono/zod-validator` |
 
 ## Role Hierarchy
 
@@ -164,4 +166,35 @@ All auth endpoints are handled by better-auth under `/api/auth/*`:
 |----------|-------------|---------|
 | `PORT` | Server port | `3002` |
 | `BETTER_AUTH_SECRET` | JWT/session secret | `dev-secret-change-me-in-production` |
-| `BETTER_AUTH_URL` | Base URL for callbacks | auto-detected |
+| `BETTER_AUTH_URL` | Base URL for auth callbacks | auto-detected from request |
+
+See `.env.example` for all configurable options.
+
+## Build & Deploy
+
+Build the frontend for production:
+
+```bash
+bun run build
+```
+
+This outputs static assets to `dist/`. In production mode the Hono server serves these directly via `serveStatic`, so you only need to run the backend:
+
+```bash
+bun run server/index.ts
+```
+
+### With PM2
+
+```bash
+pm2 start server/index.ts --name booking-system --interpreter "bun"
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start Vite dev server + Hono API (hot reload) |
+| `bun run build` | Production build → `dist/` |
+| `bun run db:push` | Push Drizzle schema to SQLite |
+| `bun run db:seed` | Seed sample data + initial superadmin |

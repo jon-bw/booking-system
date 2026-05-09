@@ -104,3 +104,14 @@ export const bookings = sqliteTable('bookings', {
   createdAt: integer('created_at'),
   updatedAt: integer('updated_at'),
 });
+
+// Page Blocks — block-based public page builder for tenants
+export const pageBlocks = sqliteTable('page_blocks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  blockType: text('block_type').notNull(),
+  config: text('config', { mode: 'json' }),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at'),
+});

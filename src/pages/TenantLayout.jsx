@@ -58,6 +58,12 @@ export default function TenantLayout() {
             >
               Admin
             </Link>
+            <Link
+              to={`/tenants/${tenant.slug}/blocks`}
+              className="font-mono uppercase rounded-full border border-border px-5 py-2 text-xs text-text hover:bg-surface hover:text-accent transition-colors"
+            >
+              Page Editor
+            </Link>
           </nav>
         </div>
       </header>
