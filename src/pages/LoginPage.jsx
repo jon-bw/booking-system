@@ -17,7 +17,11 @@ export default function LoginPage() {
       if (res.error) {
         setError(res.error.message || 'Login failed');
       } else {
-        navigate('/home');
+        if(res.data && res.data.user.name === "Superadmin") {
+          navigate('/superadmin');
+        } else {
+          navigate('/home');
+        }
       }
     } catch (err) {
       setError(err.message || 'Login failed');

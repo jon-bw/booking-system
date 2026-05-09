@@ -67,7 +67,12 @@ router.post('/', authMiddleware, requireRole('admin', 'superadmin'), async (c) =
   if (!name || !slug) return c.json({ error: 'name and slug required' }, 400);
 
   const profile = c.get('profile');
-  const ownerId = profile.role === 'admin' ? profile.userId : null;
+  let ownerId: string | null = profile.role === 'admin' ? profile.userId : null;
+
+  // superadmin can optionally assign an owner
+  if (profile.role === 'superadmin' && body.ownerId) {
+    ownerId = body.ownerId;
+  }
 
   const [created] = await db.insert(tenants).values({
     name, slug, ownerId, settings: settings || {},

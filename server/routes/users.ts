@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { eq, and, inArray } from 'drizzle-orm';
 import { auth } from '../auth.js';
 import { db } from '../db/index.js';
-import { userProfiles, tenants } from '../db/schema.js';
+import { userProfiles, tenants, user } from '../db/schema.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import type { UserRole } from '../db/schema.js';
 
@@ -20,7 +20,17 @@ router.get('/', authMiddleware, requireRole('superadmin', 'admin'), async (c) =>
   const profile = c.get('profile');
 
   if (profile.role === 'superadmin') {
-    const data = await db.select().from(userProfiles);
+    const data = await db
+      .select({
+        userId: userProfiles.userId,
+        role: userProfiles.role,
+        tenantId: userProfiles.tenantId,
+        createdById: userProfiles.createdById,
+        name: user.name,
+        email: user.email,
+      })
+      .from(userProfiles)
+      .innerJoin(user, eq(userProfiles.userId, user.id));
     return c.json({ success: true, data });
   }
 
@@ -37,8 +47,16 @@ router.get('/', authMiddleware, requireRole('superadmin', 'admin'), async (c) =>
   }
 
   const data = await db
-    .select()
+    .select({
+      userId: userProfiles.userId,
+      role: userProfiles.role,
+      tenantId: userProfiles.tenantId,
+      createdById: userProfiles.createdById,
+      name: user.name,
+      email: user.email,
+    })
     .from(userProfiles)
+    .innerJoin(user, eq(userProfiles.userId, user.id))
     .where(inArray(userProfiles.tenantId, tenantIds));
 
   return c.json({ success: true, data });
@@ -48,7 +66,7 @@ router.get('/', authMiddleware, requireRole('superadmin', 'admin'), async (c) =>
 router.post('/', authMiddleware, requireRole('superadmin', 'admin'), async (c) => {
   const creatorProfile = c.get('profile');
   const body = await c.req.json();
-  const { email, password, role, tenantId } = body;
+  const { email, password, role, tenantId, name } = body;
 
   if (!email || !password || !role) {
     return c.json({ error: 'email, password, and role are required' }, 400);
@@ -77,7 +95,7 @@ router.post('/', authMiddleware, requireRole('superadmin', 'admin'), async (c) =
 
   try {
     const result: any = await auth.api.signUpEmail({
-      body: { email, password, name: email.split('@')[0] },
+      body: { email, password, name: name || email.split('@')[0] },
     });
 
     const userId = result?.user?.id ?? result?.id;

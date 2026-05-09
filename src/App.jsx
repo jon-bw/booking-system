@@ -10,7 +10,6 @@ import RoomDetailPage from './pages/RoomDetailPage.jsx';
 import TenantDashboard from './pages/TenantDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import SuperadminDashboard from './pages/SuperadminDashboard.jsx';
-import SuperadminOverview from './pages/SuperadminOverview.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 
 function NotFound() {
@@ -75,14 +74,6 @@ export default function App() {
             element={
               <SuperadminGuard>
                 <SuperadminDashboard />
-              </SuperadminGuard>
-            }
-          />
-          <Route
-            path="/superadmin/overview"
-            element={
-              <SuperadminGuard>
-                <SuperadminOverview />
               </SuperadminGuard>
             }
           />
