@@ -104,7 +104,7 @@ export default function App() {
             }
           />
           <Route
-            path="/tenants/:slug"
+            path="/tenants/:tenantSlug"
             element={
               <TenantProvider>
                 <PublicTenantPage />
@@ -112,7 +112,7 @@ export default function App() {
             }
           />
           <Route
-            path="/tenants/:slug/blocks"
+            path="/tenants/:tenantSlug/blocks"
             element={
               <TenantProvider>
                 <AuthGuard>
