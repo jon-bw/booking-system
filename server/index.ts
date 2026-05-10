@@ -3,11 +3,16 @@ import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/bun';
 import { auth } from './auth.js';
 import { tenantMiddleware } from './middleware/tenant.js';
+import { authMiddleware, requireRole } from './middleware/auth.js';
 import tenantRoutes from './routes/tenants.js';
 import roomRoutes from './routes/rooms.js';
 import bookingRoutes from './routes/bookings.js';
 import userRoutes from './routes/users.js';
 import pageBlockRoutes from './routes/pageBlocks.js';
+import themeRoutes from './routes/themes.js';
+import { eq } from 'drizzle-orm';
+import { tenants } from './db/schema.js';
+import { db } from './db/index.js';
 
 const app = new Hono();
 
@@ -29,15 +34,24 @@ app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 // ── Public Tenant Page ──────────────────────────────────────────────────────
 app.get('/api/tenants/:tenantSlug/page', tenantMiddleware, async (c) => {
   const tenantId = c.get('tenantId');
-  const { eq: _eq, and: _and, asc: _asc } = await import('drizzle-orm');
   const { pageBlocks } = await import('./db/schema.js');
-  const { db } = await import('./db/index.js');
   const blocks = await db
     .select()
     .from(pageBlocks)
-    .where(_and(_eq(pageBlocks.tenantId, tenantId), _eq(pageBlocks.isVisible, true)))
-    .orderBy(_asc(pageBlocks.sortOrder));
+    .where(eq(pageBlocks.isVisible, true))
+    .orderBy(pageBlocks.sortOrder);
   return c.json({ success: true, data: blocks });
+});
+
+// ── Public Theme ─────────────────────────────────────────────────────────────
+app.get('/api/tenants/:tenantSlug/theme', async (c) => {
+  const tenantSlug = c.req.param('tenantSlug');
+  const tenant = await db.select({ theme: tenants.theme })
+    .from(tenants)
+    .where(eq(tenants.slug, tenantSlug))
+    .limit(1);
+  if (tenant.length === 0) return c.json({ error: 'Tenant not found' }, 404);
+  return c.json({ success: true, data: tenant[0].theme || {} });
 });
 
 // ── Public Tenant Routes ───────────────────────────────────────────────────
@@ -49,6 +63,10 @@ app.use('/api/tenants/:tenantSlug/page-blocks/*', tenantMiddleware);
 app.use('/api/tenants/:tenantSlug/page-blocks/:id', tenantMiddleware);
 app.use('/api/tenants/:tenantSlug/page-blocks/reorder', tenantMiddleware);
 app.route('/api/tenants/:tenantSlug/page-blocks', pageBlockRoutes);
+
+// ── Admin: Theme Routes ─────────────────────────────────────────────────────
+app.use('/api/tenants/:tenantSlug/theme', tenantMiddleware, authMiddleware, requireRole('manager', 'admin', 'superadmin'));
+app.route('/api/tenants/:tenantSlug/theme', themeRoutes);
 
 // ── Tenant-Scoped Routes ──────────────────────────────────────────────────
 app.use('/api/tenants/:tenantSlug/rooms/*', tenantMiddleware);

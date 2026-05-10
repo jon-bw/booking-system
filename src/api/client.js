@@ -41,4 +41,8 @@ export const api = {
 
   // Public page (no auth)
   getPublicPage: (slug) => request(`/tenants/${slug}/page`),
+
+  // Theme
+  getTheme: (slug) => request(`/tenants/${slug}/theme`),
+  updateTheme: (slug, body) => request(`/tenants/${slug}/theme`, { method: 'PUT', body }),
 };

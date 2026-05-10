@@ -10,9 +10,12 @@ import { CTABlock } from '../components/blocks/CTABlock.jsx';
 import { BookingFormBlock } from '../components/blocks/BookingFormBlock.jsx';
 import { TestimonialsBlock } from '../components/blocks/TestimonialsBlock.jsx';
 import { RichTextBlock } from '../components/blocks/RichTextBlock.jsx';
+import { BannerCarouselBlock } from '../components/blocks/BannerCarouselBlock.jsx';
+import { ThemeProvider } from '../context/ThemeContext.jsx';
 
 const BLOCK_COMPONENTS = {
   hero: HeroBlock,
+  banner_carousel: BannerCarouselBlock,
   room_list: RoomListBlock,
   about: AboutBlock,
   gallery: GalleryBlock,
@@ -25,6 +28,15 @@ const BLOCK_COMPONENTS = {
 
 export default function PublicTenantPage() {
   const { tenantSlug } = useParams();
+
+  return (
+    <ThemeProvider tenantSlug={tenantSlug}>
+      <TenantPageContent tenantSlug={tenantSlug} />
+    </ThemeProvider>
+  );
+}
+
+function TenantPageContent({ tenantSlug }) {
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,69 +44,35 @@ export default function PublicTenantPage() {
   useEffect(() => {
     if (!tenantSlug) return;
     api.getPublicPage(tenantSlug)
-      .then((data) => {
-        setBlocks(Array.isArray(data.data) ? data.data : []);
-      })
-      .catch((err) => {
-        setError(err.message || 'Failed to load page');
-      })
+      .then((data) => setBlocks(Array.isArray(data.data) ? data.data : []))
+      .catch((err) => setError(err.message || 'Failed to load page'))
       .finally(() => setLoading(false));
   }, [tenantSlug]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <p className="font-mono uppercase text-sm text-text-muted animate-pulse">Loading</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><p className="font-mono uppercase text-sm animate-pulse">Loading</p></div>;
   }
 
-  if (error) {
+  if (error || blocks.length === 0) {
     return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center space-y-6 px-6">
-        <h1 className="font-display text-4xl text-text">Page Not Available</h1>
-        <p className="font-mono uppercase text-xs text-text-muted">{error}</p>
-        <Link
-          to="/"
-          className="font-mono uppercase rounded-full border border-border px-6 py-3 text-sm text-text hover:bg-surface transition-colors"
-        >
-          Return Home
-        </Link>
-      </div>
-    );
-  }
-
-  if (blocks.length === 0) {
-    return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center space-y-6 px-6">
-        <h1 className="font-display text-4xl text-text">Page Coming Soon</h1>
-        <p className="font-mono uppercase text-xs text-text-muted">This page is currently being built.</p>
-        <Link
-          to="/"
-          className="font-mono uppercase rounded-full border border-border px-6 py-3 text-sm text-text hover:bg-surface transition-colors"
-        >
-          Return Home
-        </Link>
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-6 px-6">
+        <h1 className="font-display text-4xl">{error ? 'Page Not Available' : 'Page Coming Soon'}</h1>
+        <p className="font-mono uppercase text-xs text-center">{error || 'This page is currently being built.'}</p>
+        <Link to="/" className="font-mono uppercase rounded-full border px-6 py-3 text-sm hover:bg-surface transition-colors">Return Home</Link>
       </div>
     );
   }
 
   const renderBlock = (block) => {
     const Component = BLOCK_COMPONENTS[block.blockType];
-    if (!Component) {
-      return (
-        <div key={block.id} className="border-b border-border py-16 text-center">
-          <p className="font-mono uppercase text-xs text-text-muted">Unknown block type: {block.blockType}</p>
-        </div>
-      );
-    }
+    if (!Component) return <div key={block.id} className="border-b py-16 text-center font-mono text-xs text-center">Unknown block: {block.blockType}</div>;
     const config = typeof block.config === 'string' ? JSON.parse(block.config) : (block.config || {});
-    const props = block.blockType === 'room_list' ? { config, tenantSlug } : { config };
+    const props = { config, tenantSlug };
     return <Component key={block.id} {...props} />;
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text font-sans">
+    <div className="min-h-screen">
       {blocks.map(renderBlock)}
     </div>
   );

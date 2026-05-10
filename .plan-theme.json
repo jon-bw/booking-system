@@ -1,0 +1,39 @@
+{
+  "todos": [
+    {
+      "id": "theme-schema",
+      "content": "Add theme field to tenants table, images field to rooms table, push DB schema",
+      "status": "pending"
+    },
+    {
+      "id": "theme-api",
+      "content": "Add theme API: GET/PUT /api/tenants/:slug/theme",
+      "status": "pending"
+    },
+    {
+      "id": "theme-context",
+      "content": "Create ThemeContext + CSS custom properties system",
+      "status": "pending"
+    },
+    {
+      "id": "block-carousel",
+      "content": "Build BannerCarouselBlock component with prev/next/auto-advance",
+      "status": "pending"
+    },
+    {
+      "id": "room-images",
+      "content": "RoomListBlock + RoomDetailPage show images from room config/images field",
+      "status": "pending"
+    },
+    {
+      "id": "theme-editor",
+      "content": "Theme panel in BlockEditorPage: colors, fonts, button style, border radius",
+      "status": "pending"
+    },
+    {
+      "id": "public-theme",
+      "content": "PublicTenantPage applies tenant theme CSS variables",
+      "status": "pending"
+    }
+  ]
+}

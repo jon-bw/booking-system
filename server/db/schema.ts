@@ -67,6 +67,7 @@ export const tenants = sqliteTable('tenants', {
   slug: text('slug').notNull().unique(),
   ownerId: text('owner_id'), // admin who created this tenant
   settings: text('settings', { mode: 'json' }),
+  theme: text('theme', { mode: 'json' }), // { colors, fonts, buttonStyle, borderRadius, mode }
   createdAt: integer('created_at'),
   updatedAt: integer('updated_at'),
 });
@@ -87,6 +88,8 @@ export const rooms = sqliteTable('rooms', {
   name: text('name').notNull(),
   capacity: integer('capacity').notNull(),
   pricePerHour: real('price_per_hour').notNull(),
+  description: text('description'),
+  images: text('images', { mode: 'json' }), // array of image URLs
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   createdAt: integer('created_at'),
   updatedAt: integer('updated_at'),
