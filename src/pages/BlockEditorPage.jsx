@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  Plus, Trash2, Eye, EyeOff, ArrowLeft, GripVertical, Edit2, X,
+  Plus, Trash2, Eye, EyeOff, ArrowLeft, GripVertical, Edit2, X, Sparkles,
   ArrowUp, ArrowDown, Palette, Monitor, ChevronDown, Palette as ThemeIcon,
   Type, Square, Sun, Moon,
 } from 'lucide-react';
@@ -105,11 +105,84 @@ const CONFIG_FIELDS = {
   ],
 };
 
+const BUTTON_STYLES = {
+  pill: { borderRadius: '999px', buttonStyle: 'pill' },
+  rounded: { borderRadius: '12px', buttonStyle: 'rounded' },
+  sharp: { borderRadius: '0px', buttonStyle: 'sharp' },
+};
+
 const PRESET_THEMES = {
-  nothing: { name: 'Nothing', mode: 'dark', colors: { background: '#0a0a0a', surface: '#111111', text: '#E8E8E8', textMuted: '#6b7280', border: '#333333', accent: '#5B9BF6', accentHover: '#7BB3F8', destructive: '#D71921' }, fonts: { display: 'Doto, sans-serif', body: 'Space Grotesk, sans-serif', mono: 'Space Mono, monospace' }, borderRadius: '999px', buttonStyle: 'pill' },
-  classic: { name: 'Classic', mode: 'light', colors: { background: '#ffffff', surface: '#f8f9fa', text: '#1a1a1a', textMuted: '#6b7280', border: '#e5e7eb', accent: '#3b82f6', accentHover: '#60a5fa', destructive: '#ef4444' }, fonts: { display: 'Georgia, serif', body: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' }, borderRadius: '4px', buttonStyle: 'rounded' },
-  modern: { name: 'Modern Dark', mode: 'dark', colors: { background: '#13111C', surface: '#1a1728', text: '#E4E4E7', textMuted: '#71717A', border: '#27272A', accent: '#A78BFA', accentHover: '#C4B5FD', destructive: '#F87171' }, fonts: { display: 'Inter, sans-serif', body: 'Inter, sans-serif', mono: 'JetBrains Mono, monospace' }, borderRadius: '12px', buttonStyle: 'rounded' },
-  minimal: { name: 'Minimal', mode: 'dark', colors: { background: '#fafafa', surface: '#ffffff', text: '#0a0a0a', textMuted: '#a0a0a0', border: '#e0e0e0', accent: '#0a0a0a', accentHover: '#333333', destructive: '#cc3333' }, fonts: { display: 'system-ui, sans-serif', body: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' }, borderRadius: '0px', buttonStyle: 'sharp' },
+  nothing: { name: 'Nothing', mode: 'dark', colors: { background: '#0a0a0a', surface: '#111111', text: '#E8E8E8', textMuted: '#6b7280', border: '#333333', accent: '#5B9BF6', accentHover: '#7BB3F8', destructive: '#D71921' }, fonts: { display: 'Doto, sans-serif', body: 'Space Grotesk, sans-serif', mono: 'Space Mono, monospace' }, ...BUTTON_STYLES.pill },
+  classic: { name: 'Classic', mode: 'light', colors: { background: '#ffffff', surface: '#f8f9fa', text: '#1a1a1a', textMuted: '#6b7280', border: '#e5e7eb', accent: '#3b82f6', accentHover: '#60a5fa', destructive: '#ef4444' }, fonts: { display: 'Georgia, serif', body: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' }, ...BUTTON_STYLES.rounded },
+  modern: { name: 'Modern Dark', mode: 'dark', colors: { background: '#13111C', surface: '#1a1728', text: '#E4E4E7', textMuted: '#71717A', border: '#27272A', accent: '#A78BFA', accentHover: '#C4B5FD', destructive: '#F87171' }, fonts: { display: 'Inter, sans-serif', body: 'Inter, sans-serif', mono: 'JetBrains Mono, monospace' }, ...BUTTON_STYLES.rounded },
+  minimal: { name: 'Minimal', mode: 'light', colors: { background: '#fafafa', surface: '#ffffff', text: '#0a0a0a', textMuted: '#a0a0a0', border: '#e0e0e0', accent: '#0a0a0a', accentHover: '#333333', destructive: '#cc3333' }, fonts: { display: 'system-ui, sans-serif', body: 'system-ui, sans-serif', mono: 'ui-monospace, monospace' }, ...BUTTON_STYLES.sharp },
+};
+
+// Page template presets: use-case layouts with blocks + matching theme
+const PAGE_TEMPLATES = {
+  partyroom: {
+    name: 'Party Room',
+    description: 'Showcase rooms, photos, and booking',
+    theme: PRESET_THEMES.nothing,
+    blocks: [
+      { blockType: 'hero', config: { title: 'Celebrate with Us', subtitle: 'Private party rooms for every occasion', ctaText: 'Book Now', ctaLink: '#book' } },
+      { blockType: 'banner_carousel', config: { title: '', slides: [], mode: 'rooms', autoPlay: true, interval: 5, height: 64 } },
+      { blockType: 'room_list', config: { title: 'Our Spaces', showPrices: true, showCapacity: true } },
+      { blockType: 'testimonials', config: { title: 'What People Say', testimonials: [{ name: 'Sarah', comment: 'Amazing venue!', rating: 5 }] } },
+      { blockType: 'contact', config: { title: 'Contact Us', email: '', phone: '', address: '' } },
+      { blockType: 'cta', config: { title: 'Ready to Book?', subtitle: '', buttonText: 'Get Started', buttonLink: '#' } },
+    ],
+  },
+  meetings: {
+    name: 'Meeting Space',
+    description: 'Professional rooms for work & collaboration',
+    theme: PRESET_THEMES.minimal,
+    blocks: [
+      { blockType: 'hero', config: { title: 'Meeting Spaces', subtitle: 'Professional rooms equipped for productivity', ctaText: 'View Rooms', ctaLink: '#rooms' } },
+      { blockType: 'about', config: { title: 'About', content: 'Our spaces feature high-speed WiFi, projectors, whiteboards, and catering options.' } },
+      { blockType: 'room_list', config: { title: 'Available Rooms', showPrices: true, showCapacity: true } },
+      { blockType: 'booking_form', config: { title: 'Book a Room', showDatePicker: true, showTimePicker: true } },
+      { blockType: 'contact', config: { title: 'Get In Touch', email: 'info@example.com', phone: '', address: '' } },
+    ],
+  },
+  events: {
+    name: 'Event Venue',
+    description: 'Large-scale events with photo galleries',
+    theme: PRESET_THEMES.modern,
+    blocks: [
+      { blockType: 'hero', config: { title: 'Host Your Event Here', subtitle: 'Unforgettable spaces for celebrations & corporate events', ctaText: 'Plan Your Event', ctaLink: '#plan' } },
+      { blockType: 'banner_carousel', config: { title: '', slides: [], mode: 'rooms', autoPlay: true, interval: 5, height: 70 } },
+      { blockType: 'gallery', config: { title: 'Our Spaces', images: '' } },
+      { blockType: 'about', config: { title: 'Why Choose Us', content: 'Full catering, AV equipment, dedicated event coordinators, and flexible layouts.' } },
+      { blockType: 'testimonials', config: { title: 'Testimonials', testimonials: [] } },
+      { blockType: 'cta', config: { title: 'Let\'s Plan Something Great', subtitle: 'Contact us to discuss your event needs', buttonText: 'Contact Us', buttonLink: '#' } },
+    ],
+  },
+  studio: {
+    name: 'Studio / Workshop',
+    description: 'Creative studios and workshop spaces',
+    theme: { ...PRESET_THEMES.classic, mode: 'dark', colors: { ...PRESET_THEMES.classic.colors, background: '#1a1a1a', surface: '#2d2d2d', text: '#f0f0f0', border: '#444' } },
+    blocks: [
+      { blockType: 'hero', config: { title: 'Make Something Here', subtitle: 'Creative studios for artists & makers', ctaText: 'Explore', ctaLink: '#explore' } },
+      { blockType: 'gallery', config: { title: 'The Space', images: '' } },
+      { blockType: 'room_list', config: { title: 'Studios', showPrices: true, showCapacity: false } },
+      { blockType: 'about', config: { title: 'What\'s Included', content: 'Natural light, workbenches, storage, and all essential tools.' } },
+      { blockType: 'contact', config: { title: 'Book a Studio', email: '', phone: '', address: '' } },
+    ],
+  },
+  coworking: {
+    name: 'Coworking Hub',
+    description: 'Shared workspace with flexible plans',
+    theme: PRESET_THEMES.classic,
+    blocks: [
+      { blockType: 'hero', config: { title: 'Your New Workspace', subtitle: 'Flexible desks & private offices for teams of any size', ctaText: 'Start Free Trial', ctaLink: '#signup' } },
+      { blockType: 'banner_carousel', config: { title: '', slides: [], mode: 'rooms', autoPlay: true, interval: 5, height: 60 } },
+      { blockType: 'room_list', config: { title: 'Spaces', showPrices: true, showCapacity: true } },
+      { blockType: 'about', config: { title: 'Amenities', content: 'High-speed WiFi, unlimited coffee, phone booths, printing, and event space.' } },
+      { blockType: 'testimonials', config: { title: 'Member Reviews', testimonials: [] } },
+      { blockType: 'cta', config: { title: 'Ready to Move In?', subtitle: '', buttonText: 'Start Your Trial', buttonLink: '#' } },
+    ],
+  },
 };
 
 function parseConfig(block) {
@@ -186,6 +259,55 @@ function ThemeEditorPanel({ tenantSlug }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const applyTemplate = (key) => {
+    if (blocks.length > 0 && !window.confirm('Applying a template will replace all existing blocks. Continue?')) return;
+    const tpl = PAGE_TEMPLATES(key);
+    if (!tpl) return;
+    setApplyingTemplate(true);
+
+    // Apply theme
+    setLocal({
+      colors: { ...tpl.theme.colors },
+      fonts: { ...tpl.theme.fonts },
+      buttonStyle: tpl.theme.buttonStyle,
+      borderRadius: tpl.theme.borderRadius,
+      mode: tpl.theme.mode,
+    });
+    setTheme({
+      colors: { ...tpl.theme.colors },
+      fonts: { ...tpl.theme.fonts },
+      buttonStyle: tpl.theme.buttonStyle,
+      borderRadius: tpl.theme.borderRadius,
+      mode: tpl.theme.mode,
+    });
+
+    // Replace all blocks
+    (async () => {
+      try {
+        // Delete existing blocks first
+        for (const block of blocks) {
+          await api.deletePageBlock(tenantSlug, block.id);
+        }
+
+        // Create new blocks sequentially
+        const createdBlocks = [];
+        for (const [i, blockDef] of tpl.blocks.entries()) {
+          const created = await api.createPageBlock(tenantSlug, {
+            blockType: blockDef.blockType,
+            config: blockDef.config,
+            sortOrder: i,
+          });
+          createdBlocks.push(created.data || created);
+        }
+        setBlocks(createdBlocks);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setApplyingTemplate(false);
+      }
+    })();
   };
 
   const updateColor = (key, value) => {
@@ -486,7 +608,8 @@ function BlockEditorInner() {
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [addingType, setAddingType] = useState('');
   const [activeId, setActiveId] = useState(null);
-  const [activeTab, setActiveTab] = useState('blocks'); // 'blocks' | 'theme'
+  const [activeTab, setActiveTab] = useState('blocks'); // 'blocks' | 'theme' | 'templates'
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor));
 
@@ -561,6 +684,9 @@ function BlockEditorInner() {
               <button onClick={() => setActiveTab('blocks')} className={`flex-1 py-2 font-mono uppercase text-xs transition-colors inline-flex items-center justify-center gap-1.5 ${activeTab === 'blocks' ? 'text-accent border-b-2' : 'opacity-50 hover:text-accent'}`} style={{ borderColor: activeTab === 'blocks' ? 'var(--accent, #5B9BF6)' : 'transparent' }}>
                 <GripVertical className="w-3.5 h-3.5" /> Blocks
               </button>
+              <button onClick={() => setActiveTab('templates')} className={`flex-1 py-2 font-mono uppercase text-xs transition-colors inline-flex items-center justify-center gap-1.5 ${activeTab === 'templates' ? 'text-accent border-b-2' : 'opacity-50 hover:text-accent'}`} style={{ borderColor: activeTab === 'templates' ? 'var(--accent, #5B9BF6)' : 'transparent' }}>
+                <Sparkles className="w-3.5 h-3.5" /> Templates
+              </button>
               <button onClick={() => setActiveTab('theme')} className={`flex-1 py-2 font-mono uppercase text-xs transition-colors inline-flex items-center justify-center gap-1.5 ${activeTab === 'theme' ? 'text-accent border-b-2' : 'opacity-50 hover:text-accent'}`} style={{ borderColor: activeTab === 'theme' ? 'var(--accent, #5B9BF6)' : 'transparent' }}>
                 <Palette className="w-3.5 h-3.5" /> Theme
               </button>
@@ -568,7 +694,47 @@ function BlockEditorInner() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-              {activeTab === 'theme' ? (
+              {activeTab === 'templates' ? (
+                <div className="p-4 space-y-4">
+                  <div className="mb-4">
+                    <h3 className="font-mono uppercase text-xs text-text-muted mb-1">Page Templates</h3>
+                    <p className="font-mono text-xs text-text-muted">Choose a template to start. This will replace all existing blocks and apply a matching theme.</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {Object.entries(PAGE_TEMPLATES).map(([key, tpl]) => (
+                      <button
+                        key={key}
+                        onClick={() => applyTemplate(key)}
+                        disabled={applyingTemplate}
+                        className="text-left border rounded-lg p-4 transition-colors hover:border-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ borderColor: 'var(--border, #333333)' }}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-display text-lg" style={{ color: 'var(--accent, #5B9BF6)' }}>{tpl.name}</h4>
+                            <p className="font-mono text-xs text-text-muted">{tpl.description}</p>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full" style={{ background: tpl.theme.colors.background, border: '1px solid var(--border)' }} />
+                            <div className="w-3 h-3 rounded-full" style={{ background: tpl.theme.colors.accent }} />
+                            <div className="w-3 h-3 rounded-full" style={{ background: tpl.theme.colors.text }} />
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {tpl.blocks.map((b, i) => (
+                            <span key={i} className="font-mono text-xs border rounded-full px-2 py-0.5" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                              {BLOCK_TYPES.find((bt) => bt.value === b.blockType)?.label || b.blockType}
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {applyingTemplate && (
+                    <p className="font-mono text-xs text-accent animate-pulse">Applying template...</p>
+                  )}
+                </div>
+              ) : activeTab === 'theme' ? (
                 <div className="p-4"><ThemeEditorPanel tenantSlug={tenantSlug} /></div>
               ) : (
                 <>
