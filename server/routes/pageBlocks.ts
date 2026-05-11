@@ -9,7 +9,7 @@ import { authMiddleware, requireRole, requireTenantAccess } from '../middleware/
 const router = new Hono();
 
 const validBlockTypes = [
-  'hero', 'room_list', 'about', 'gallery', 'contact',
+  'hero', 'banner_carousel', 'room_list', 'about', 'gallery', 'contact',
   'cta', 'booking_form', 'testimonials', 'rich_text'
 ] as const;
 
