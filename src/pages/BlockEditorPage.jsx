@@ -45,7 +45,7 @@ const DEFAULT_CONFIGS = {
   banner_carousel: { title: '', slides: [{ url: '', caption: '' }, { url: '', caption: '' }], mode: 'manual', autoPlay: true, interval: 5, height: 64 },
   room_list: { title: 'Our Rooms', showPrices: true, showCapacity: true },
   about: { title: 'About Us', content: 'Tell your story...' },
-  gallery: { title: 'Gallery' },
+  gallery: { title: 'Gallery', images: '' },
   contact: { title: 'Contact Us', email: '', phone: '', address: '' },
   cta: { title: 'Ready to Book?', subtitle: '', buttonText: 'Get Started', buttonLink: '#' },
   booking_form: { title: 'Book a Room', showDatePicker: true, showTimePicker: true },
@@ -78,6 +78,7 @@ const CONFIG_FIELDS = {
   ],
   gallery: [
     { key: 'title', label: 'Title', type: 'text', placeholder: 'Gallery' },
+    { key: 'images', label: 'Images (one URL per line)', type: 'textarea', placeholder: 'https://example.com/photo1.jpg\nhttps://example.com/photo2.jpg\nhttps://example.com/photo3.jpg' },
   ],
   contact: [
     { key: 'title', label: 'Title', type: 'text', placeholder: 'Contact Us' },

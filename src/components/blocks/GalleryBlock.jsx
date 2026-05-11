@@ -1,7 +1,21 @@
 export function GalleryBlock({ config = {} }) {
-  const { title = 'Gallery', images = [] } = config;
+  const { title = 'Gallery', images = '' } = config;
 
-  if (!images || images.length === 0) {
+  // Parse images: support newline-separated URL string from editor, or array format
+  const parsedImages = (() => {
+    if (typeof images === 'string') {
+      return images.split('\n').map((u) => u.trim()).filter(Boolean).map((url, i) => ({ url, alt: `Gallery image ${i + 1}` }));
+    }
+    if (Array.isArray(images)) {
+      return images.map((img, i) => ({
+        url: img.src || img.url || '',
+        alt: img.alt || `Gallery image ${i + 1}`,
+      }));
+    }
+    return [];
+  })();
+
+  if (parsedImages.length === 0) {
     return (
       <section className="border-b border-border py-16">
         <div className="max-w-6xl mx-auto px-6">
@@ -17,11 +31,11 @@ export function GalleryBlock({ config = {} }) {
       <div className="max-w-6xl mx-auto px-6">
         <h2 className="font-display text-4xl text-text text-center mb-12">{title}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {images.map((img, i) => (
+          {parsedImages.map((img, i) => (
             <div key={i} className="border border-border aspect-video overflow-hidden">
               <img
-                src={img.src || img.url}
-                alt={img.alt || `Gallery image ${i + 1}`}
+                src={img.url}
+                alt={img.alt}
                 className="w-full h-full object-cover"
               />
             </div>
