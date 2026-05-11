@@ -1,14 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { api } from '../../api/client.js';
 
 const DEFAULT_SLIDES = [
   { url: '', caption: '' },
 ];
 
-export function BannerCarouselBlock({ config = {} }) {
-  const { title, slides = DEFAULT_SLIDES, autoPlay = true, interval = 5000, height = 64 } = config;
+export function BannerCarouselBlock({ config = {}, tenantSlug = '' }) {
+  const { title, slides = DEFAULT_SLIDES, autoPlay = true, interval = 5000, height = 64, mode = 'manual' } = config;
   const [current, setCurrent] = useState(0);
-  const validSlides = slides.filter((s) => s.url && s.url.trim());
+  const [rooms, setRooms] = useState([]);
+
+  // Fetch rooms when in 'rooms' mode
+  useEffect(() => {
+    if (mode !== 'rooms' || !tenantSlug) return;
+    api.listRooms(tenantSlug)
+      .then((data) => setRooms(Array.isArray(data.data) ? data.data.filter((r) => !r.isDeleted && r.images?.length > 0) : []))
+      .catch(() => setRooms([]));
+  }, [mode, tenantSlug]);
+
+  // Build slides from room images
+  const effectiveSlides = mode === 'rooms'
+    ? rooms.map((r) => ({ url: r.images[0], caption: r.name }))
+    : slides;
+
+  const validSlides = effectiveSlides.filter((s) => s.url && s.url.trim());
 
   const next = useCallback(() => {
     if (validSlides.length <= 1) return;
@@ -21,21 +37,28 @@ export function BannerCarouselBlock({ config = {} }) {
   }, [validSlides.length]);
 
   useEffect(() => {
+    setCurrent(0);
+  }, [validSlides]);
+
+  useEffect(() => {
     if (!autoPlay || validSlides.length <= 1) return;
     const timer = setInterval(next, interval * 1000);
     return () => clearInterval(timer);
   }, [autoPlay, interval, next, validSlides.length]);
 
   if (validSlides.length === 0) {
+    const placeholder = mode === 'rooms'
+      ? 'Add rooms with images to create a carousel'
+      : 'Add images to create a carousel';
     return (
-      <div className="bg-bg border-b border-border py-16 text-center">
-        <p className="font-mono uppercase text-sm text-text-muted">Add images to create a carousel</p>
+      <div className="border-b border-border bg-bg py-16 text-center">
+        <p className="font-mono uppercase text-sm text-text-muted">{placeholder}</p>
       </div>
     );
   }
 
   return (
-    <section className="relative overflow-hidden" style={{ height: `calc(${height}vh)` }}>
+    <section className="relative border-b border-border overflow-hidden bg-bg" style={{ height: `calc(${height}vh)` }}>
       {/* Slides */}
       {validSlides.map((slide, i) => (
         <div

@@ -41,7 +41,7 @@ router.post(
   async (c) => {
     const tenantId = c.get('tenantId');
     const body = await c.req.json();
-    const { name, capacity, pricePerHour } = body;
+    const { name, capacity, pricePerHour, description, images } = body;
     if (!name || capacity === undefined || pricePerHour === undefined) {
       return c.json({ error: 'name, capacity, and pricePerHour are required' }, 400);
     }
@@ -50,6 +50,8 @@ router.post(
       name,
       capacity: Number(capacity),
       pricePerHour: Number(pricePerHour),
+      description: description || null,
+      images: (images && images.length > 0) ? JSON.stringify(images) : null,
       isDeleted: false,
     }).returning();
     return c.json({ success: true, data: created }, 201);
@@ -76,6 +78,10 @@ router.patch(
     if (body.capacity !== undefined) updates.capacity = Number(body.capacity);
     if (body.pricePerHour !== undefined) updates.pricePerHour = Number(body.pricePerHour);
     if (body.isDeleted !== undefined) updates.isDeleted = body.isDeleted;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.images !== undefined) {
+      updates.images = (Array.isArray(body.images) && body.images.length > 0) ? JSON.stringify(body.images) : null;
+    }
 
     const [updated] = await db.update(rooms).set(updates)
       .where(eq(rooms.id, roomId)).returning();

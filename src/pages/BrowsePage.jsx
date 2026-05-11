@@ -52,30 +52,34 @@ export default function BrowsePage() {
       {/* Bento grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {rooms.map((room) => (
-          <div
-            key={room.id}
-            className="bg-surface border border-border p-6 flex flex-col space-y-4"
-          >
-            <div className="space-y-1">
-              <h3 className="font-sans text-xl font-medium text-text">{room.name}</h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-text-muted" />
-                  <span className="font-mono text-sm text-text-muted">{room.capacity}</span>
-                </div>
-                <span className="font-display text-lg text-accent">
-                  {formatPrice(room.pricePerHour)}
-                </span>
+      <div key={room.id} className="bg-surface border border-border flex flex-col">
+        {(room.images && room.images.length > 0) ? (
+          <img src={room.images[0]} alt={room.name} className="w-full h-48 object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+        ) : (
+          <div className="w-full h-48 bg-bg flex items-center justify-center"><p className="font-mono text-xs text-text-muted uppercase">No image</p></div>
+        )}
+        <div className="p-6 flex flex-col space-y-4 flex-1">
+          <div className="space-y-1">
+            <h3 className="font-sans text-xl font-medium text-text">{room.name}</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-text-muted" />
+                <span className="font-mono text-sm text-text-muted">{room.capacity}</span>
               </div>
+              <span className="font-display text-lg text-accent">
+                {formatPrice(room.pricePerHour)}
+              </span>
             </div>
-
-            <Link
-              to={`/${tenantSlug}/room/${room.id}`}
-              className="font-mono uppercase rounded-full border border-border px-4 py-2 text-xs text-text text-center hover:bg-surface hover:border-accent hover:text-accent transition-colors mt-auto"
-            >
-              Book Now
-            </Link>
           </div>
+
+          <Link
+            to={`/${tenantSlug}/room/${room.id}`}
+            className="font-mono uppercase rounded-full border border-border px-4 py-2 text-xs text-text text-center hover:bg-surface hover:border-accent hover:text-accent transition-colors mt-auto"
+          >
+            Book Now
+          </Link>
+        </div>
+      </div>
         ))}
       </div>
     </main>

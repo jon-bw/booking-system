@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -38,15 +38,34 @@ export function ThemeProvider({ tenantSlug, children }) {
           merged.colors = { ...DEFAULT_THEME.colors, ...(data.data.colors || {}) };
           merged.fonts = { ...DEFAULT_THEME.fonts, ...(data.data.fonts || {}) };
           setTheme(merged);
-          applyCSSTheme(merged);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [tenantSlug]);
 
+  // Expose CSS vars as a style object — call via useTheme().style
+  const themeVars = useMemo(() => {
+    const c = theme.colors || {};
+    const f = theme.fonts || {};
+    return {
+      '--bg': c.background,
+      '--surface': c.surface,
+      '--text': c.text,
+      '--text-muted': c.textMuted,
+      '--border': c.border,
+      '--accent': c.accent,
+      '--accent-hover': c.accentHover || c.accent,
+      '--destructive': c.destructive,
+      '--font-display': f.display,
+      '--font-body': f.body,
+      '--font-mono': f.mono,
+      '--radius': theme.borderRadius,
+    };
+  }, [theme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, loading }}>
+    <ThemeContext.Provider value={{ theme, setTheme, loading, style: themeVars }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -54,22 +73,4 @@ export function ThemeProvider({ tenantSlug, children }) {
 
 export function useTheme() {
   return useContext(ThemeContext);
-}
-
-function applyCSSTheme(t) {
-  const root = document.documentElement;
-  const c = t.colors || {};
-  const f = t.fonts || {};
-  root.style.setProperty('--bg', c.background);
-  root.style.setProperty('--surface', c.surface);
-  root.style.setProperty('--text', c.text);
-  root.style.setProperty('--text-muted', c.textMuted);
-  root.style.setProperty('--border', c.border);
-  root.style.setProperty('--accent', c.accent);
-  root.style.setProperty('--accent-hover', c.accentHover || c.accent);
-  root.style.setProperty('--destructive', c.destructive);
-  root.style.setProperty('--font-display', f.display);
-  root.style.setProperty('--font-body', f.body);
-  root.style.setProperty('--font-mono', f.mono);
-  root.style.setProperty('--radius', t.borderRadius);
 }

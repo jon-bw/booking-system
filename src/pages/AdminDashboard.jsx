@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddRoom, setShowAddRoom] = useState(false);
-  const [newRoom, setNewRoom] = useState({ name: '', capacity: '', pricePerHour: '' });
+  const [newRoom, setNewRoom] = useState({ name: '', capacity: '', pricePerHour: '', images: '' });
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', password: '', role: 'user' });
   const [userMessage, setUserMessage] = useState('');
@@ -69,13 +69,17 @@ export default function AdminDashboard() {
         setError('All fields are required');
         return;
       }
+      const images = newRoom.images
+        ? newRoom.images.split('\n').map((u) => u.trim()).filter(Boolean)
+        : [];
       const created = await api.createRoom(tenantSlug, {
         name: newRoom.name,
         capacity: parseInt(newRoom.capacity, 10),
         pricePerHour: parseInt(newRoom.pricePerHour, 10),
+        images,
       });
       setRooms((prev) => [...prev, created.data || created]);
-      setNewRoom({ name: '', capacity: '', pricePerHour: '' });
+      setNewRoom({ name: '', capacity: '', pricePerHour: '', images: '' });
       setShowAddRoom(false);
     } catch (err) {
       setError(err.message);
@@ -273,6 +277,16 @@ export default function AdminDashboard() {
                       className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent"
                     />
                   </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-mono uppercase text-xs text-text-muted">Images (one URL per line)</label>
+                  <textarea
+                    value={newRoom.images}
+                    onChange={(e) => setNewRoom({ ...newRoom, images: e.target.value })}
+                    placeholder="https://example.com/room-photo-1.jpg&#10;https://example.com/room-photo-2.jpg"
+                    rows={3}
+                    className="w-full bg-bg border border-border rounded-lg px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent resize-y"
+                  />
                 </div>
                 <div className="flex gap-3">
                   <button

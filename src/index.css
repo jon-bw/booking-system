@@ -14,37 +14,21 @@
   --font-mono: 'Space Mono', monospace;
 }
 
-/* Theme CSS custom properties — updated dynamically by ThemeContext */
-:root {
-  --bg: #0a0a0a;
-  --surface: #111111;
-  --text: #E8E8E8;
-  --text-muted: #6b7280;
-  --border: #333333;
-  --accent: #5B9BF6;
-  --accent-hover: #7BB3F8;
-  --destructive: #D71921;
-  --font-display: 'Doto', sans-serif;
-  --font-body: 'Space Grotesk', sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --radius: 999px;
-}
-
-/* Apply theme variables to Tailwind utility classes */
-.bg-bg { background-color: var(--bg, #0a0a0a) !important; }
-.bg-surface { background-color: var(--surface, #111111) !important; }
-.text-text { color: var(--text, #e8e8e8) !important; }
-.text-text-muted { color: var(--text-muted, #6b7280) !important; }
-.text-accent { color: var(--accent, #5b9bf0) !important; }
-.text-destructive { color: var(--destructive, #d71921) !important; }
-.border-border { border-color: var(--border, #333333) !important; }
-.border-accent { border-color: var(--accent, #5b9bf0) !important; }
-.hover\:border-accent:hover { border-color: var(--accent, #5b9bf0) !important; }
-.hover\:text-accent:hover { color: var(--accent, #5b9bf0) !important; }
-.hover\:bg-surface:hover { background-color: var(--surface, #111111) !important; }
-.font-display { font-family: var(--font-display, 'Doto', sans-serif) !important; }
-.font-body { font-family: var(--font-body, 'Space Grotesk', sans-serif) !important; }
-.font-mono { font-family: var(--font-mono, 'Space Mono', monospace) !important; }
-
-/* Apply radius to pills and rounded elements */
-.rounded-full { border-radius: var(--radius, 999px) !important; }
+/* Themed utility overrides — ONLY apply inside .themed-content wrapper.
+   These read CSS custom properties set via inline style on the wrapper div,
+   so tenant themes only affect the public booking page and block editor preview. */
+.themed-content .bg-bg { background-color: var(--bg, #0a0a0a) !important; }
+.themed-content .bg-surface { background-color: var(--surface, #111111) !important; }
+.themed-content .text-text { color: var(--text, #e8e8e8) !important; }
+.themed-content .text-text-muted { color: var(--text-muted, #6b7280) !important; }
+.themed-content .text-accent { color: var(--accent, #5b9bf0) !important; }
+.themed-content .text-destructive { color: var(--destructive, #d71921) !important; }
+.themed-content .border-border { border-color: var(--border, #333333) !important; }
+.themed-content .border-accent { border-color: var(--accent, #5b9bf0) !important; }
+.themed-content .hover\:border-accent:hover { border-color: var(--accent, #5b9bf0) !important; }
+.themed-content .hover\:text-accent:hover { color: var(--accent, #5b9bf0) !important; }
+.themed-content .hover\:bg-surface:hover { background-color: var(--surface, #111111) !important; }
+.themed-content .font-display { font-family: var(--font-display, 'Doto', sans-serif) !important; }
+.themed-content .font-body { font-family: var(--font-body, 'Space Grotesk', sans-serif) !important; }
+.themed-content .font-mono { font-family: var(--font-mono, 'Space Mono', monospace) !important; }
+.themed-content .rounded-full { border-radius: var(--radius, 999px) !important; }

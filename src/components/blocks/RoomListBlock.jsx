@@ -11,7 +11,7 @@ export function RoomListBlock({ config = {}, tenantSlug = '' }) {
     if (!tenantSlug) return;
     setLoading(true);
     api.listRooms(tenantSlug)
-      .then((data) => setRooms(Array.isArray(data.data) ? data.data : []))
+      .then((data) => setRooms(Array.isArray(data.data) ? data.data.filter((r) => !r.isDeleted) : []))
       .catch(() => setRooms([]))
       .finally(() => setLoading(false));
   }, [tenantSlug]);
@@ -38,12 +38,31 @@ export function RoomListBlock({ config = {}, tenantSlug = '' }) {
             <Link
               key={room.id}
               to={`/${tenantSlug}/room/${room.id}`}
-              className="border border-border p-6 space-y-3 hover:border-accent transition-colors"
+              className="border border-border flex flex-col hover:border-accent transition-colors group"
             >
-              <h3 className="font-display text-2xl">{room.name}</h3>
-              <div className="flex gap-4 font-mono text-xs uppercase text-text-muted">
-                {showCapacity && <span>Cap: {room.capacity}</span>}
-                {showPrices && <span>${room.pricePerHour}/hr</span>}
+              {/* Room image */}
+              <div className="w-full h-48 overflow-hidden bg-bg">
+                {room.images && room.images.length > 0 ? (
+                  <img
+                    src={room.images[0]}
+                    alt={room.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <p className="font-mono text-xs text-text-muted uppercase">No image</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Room details */}
+              <div className="p-6 space-y-3 flex-1">
+                <h3 className="font-display text-2xl">{room.name}</h3>
+                <div className="flex gap-4 font-mono text-xs uppercase text-text-muted">
+                  {showCapacity && <span>Cap: {room.capacity}</span>}
+                  {showPrices && <span>${room.pricePerHour}/hr</span>}
+                </div>
               </div>
             </Link>
           ))}

@@ -42,7 +42,7 @@ const BLOCK_TYPES = [
 
 const DEFAULT_CONFIGS = {
   hero: { title: 'Your Title Here', subtitle: 'A brief description', ctaText: 'Learn More', ctaLink: '#' },
-  banner_carousel: { title: '', slides: [{ url: '', caption: '' }, { url: '', caption: '' }], autoPlay: true, interval: 5, height: 64 },
+  banner_carousel: { title: '', slides: [{ url: '', caption: '' }, { url: '', caption: '' }], mode: 'manual', autoPlay: true, interval: 5, height: 64 },
   room_list: { title: 'Our Rooms', showPrices: true, showCapacity: true },
   about: { title: 'About Us', content: 'Tell your story...' },
   gallery: { title: 'Gallery' },
@@ -62,6 +62,7 @@ const CONFIG_FIELDS = {
   ],
   banner_carousel: [
     { key: 'title', label: 'Overlay Title (optional)', type: 'text' },
+    { key: 'mode', label: 'Content Mode', type: 'select', options: ['manual', 'rooms'], default: 'manual' },
     { key: 'autoPlay', label: 'Auto-Play', type: 'boolean' },
     { key: 'interval', label: 'Interval (seconds)', type: 'number' },
     { key: 'height', label: 'Height (vh)', type: 'number' },
@@ -119,9 +120,16 @@ function parseConfig(block) {
 const PREVIEW_COMPONENTS = { hero: HeroBlock, banner_carousel: BannerCarouselBlock, room_list: RoomListBlock, about: AboutBlock, gallery: GalleryBlock, contact: ContactBlock, cta: CTABlock, testimonials: TestimonialsBlock, rich_text: RichTextBlock };
 
 function LivePreview({ blocks, tenantSlug }) {
+  const { theme, style: themeVars, loading: themeLoading } = useTheme();
+  const wrapperStyle = {
+    ...themeVars,
+    background: themeVars?.['--bg'] ?? '#0a0a0a',
+    color: themeVars?.['--text'] ?? '#E8E8E8',
+  };
+
   if (blocks.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-text-muted">
+      <div className="h-full flex flex-col items-center justify-center" style={{ background: wrapperStyle['--surface'] ?? '#111111', color: themeVars?.['--text-muted'] ?? '#6b7280' }}>
         <Monitor className="w-12 h-12 mb-4 opacity-30" />
         <p className="font-mono uppercase text-xs">No blocks yet</p>
         <p className="font-mono text-xs mt-1 opacity-50">Add blocks to see a live preview</p>
@@ -130,7 +138,7 @@ function LivePreview({ blocks, tenantSlug }) {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-bg">
+    <div className="themed-content h-full overflow-y-auto bg-bg" style={wrapperStyle}>
       {blocks.map((block) => {
         if (!block.isVisible) return null;
         const Component = PREVIEW_COMPONENTS[block.blockType];
@@ -164,27 +172,14 @@ function ThemeEditorPanel({ tenantSlug }) {
   };
 
   const applyToPreview = (t) => {
-    const c = t.colors || {};
-    const f = t.fonts || {};
-    document.documentElement.style.setProperty('--bg', c.background);
-    document.documentElement.style.setProperty('--surface', c.surface);
-    document.documentElement.style.setProperty('--text', c.text);
-    document.documentElement.style.setProperty('--text-muted', c.textMuted);
-    document.documentElement.style.setProperty('--border', c.border);
-    document.documentElement.style.setProperty('--accent', c.accent);
-    document.documentElement.style.setProperty('--accent-hover', c.accentHover || c.accent);
-    document.documentElement.style.setProperty('--destructive', c.destructive);
-    document.documentElement.style.setProperty('--font-display', f.display);
-    document.documentElement.style.setProperty('--font-body', f.body);
-    document.documentElement.style.setProperty('--font-mono', f.mono);
-    document.documentElement.style.setProperty('--radius', t.borderRadius);
+    setLocal(t);
+    setTheme(t);  // Update theme context live — wrapper div reads from useTheme().style
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await api.updateTheme(tenantSlug, local);
-      setTheme(local);
     } catch (e) {
       console.error(e);
     } finally {
@@ -370,8 +365,9 @@ function SortableBlockItem({ block, onEdit, onToggleVisibility, onDelete, onMove
     return fields.map(([_, v]) => v).join(' · ') || typeInfo?.description || block.blockType;
   })();
 
-  // For carousel — render slide list editor
+  // For carousel — render slide list editor or room picker
   if (editing && block.blockType === 'banner_carousel') {
+    const carouselMode = config.mode || 'manual';
     return (
       <div ref={setNodeRef} style={style} className="border border-accent bg-accent/5">
         <div className="flex items-center gap-1 px-3 py-2 border-b border-border">
@@ -384,7 +380,24 @@ function SortableBlockItem({ block, onEdit, onToggleVisibility, onDelete, onMove
             <label className="font-mono text-xs text-text-muted">Title (optional)</label>
             <input type="text" value={config.title || ''} onChange={(e) => onEdit(block.id, { ...config, title: e.target.value })} className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-text font-mono" />
           </div>
-          <SlideListEditor value={config.slides || []} onChange={(slides) => onEdit(block.id, { ...config, slides })} />
+
+          {/* Mode selector */}
+          <div className="space-y-2">
+            <label className="font-mono text-xs text-text-muted">Source Mode</label>
+            <div className="flex gap-2">
+              <button onClick={() => onEdit(block.id, { ...config, mode: 'manual' })} className={`flex-1 border px-3 py-1.5 text-xs font-mono transition-colors ${carouselMode === 'manual' ? 'border-accent text-accent bg-accent/5' : 'border-border text-text-muted hover:border-text-muted'}`}>Manual Slides</button>
+              <button onClick={() => onEdit(block.id, { ...config, mode: 'rooms' })} className={`flex-1 border px-3 py-1.5 text-xs font-mono transition-colors ${carouselMode === 'rooms' ? 'border-accent text-accent bg-accent/5' : 'border-border text-text-muted hover:border-text-muted'}`}>From Rooms</button>
+            </div>
+          </div>
+
+          {carouselMode === 'manual' ? (
+            <SlideListEditor value={config.slides || []} onChange={(slides) => onEdit(block.id, { ...config, slides })} />
+          ) : (
+            <div className="space-y-2">
+              <p className="font-mono text-xs text-text-muted">Uses first image from each room. Add images in Admin dashboard.</p>
+            </div>
+          )}
+
           <div className="space-y-2">
             {CONFIG_FIELDS.banner_carousel?.filter((f) => f.type === 'boolean' || f.type === 'number').map((f) => (
               <div key={f.key} className="space-y-1">
@@ -423,7 +436,7 @@ function SortableBlockItem({ block, onEdit, onToggleVisibility, onDelete, onMove
         <ConfigForm block={block} onSave={handleSave} onCancel={() => { setExpanded(false); setEditing(false); }} initialConfig={config} extraFields={extraFieldsList} />
       ) : (
         <div className="px-4 py-2 border-t border-border"><p className="font-mono text-xs text-text-muted truncate">{summary}</p></div>
-      )}
+      ))}
     </div>
   );
 }
@@ -442,6 +455,10 @@ function ConfigForm({ block, onSave, onCancel, initialConfig }) {
           <label className="font-mono uppercase text-xs text-text-muted">{field.label}</label>
           {field.type === 'boolean' ? (
             <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editedConfig[field.key] ?? false} onChange={(e) => updateField(field.key, e.target.checked)} className="accent-accent w-4 h-4" /><span className="font-mono text-xs text-text">{editedConfig[field.key] ? 'Yes' : 'No'}</span></label>
+          ) : field.type === 'select' ? (
+            <select value={editedConfig[field.key] || field.options?.[0] || ''} onChange={(e) => updateField(field.key, e.target.value)} className="w-full bg-surface border border-border rounded-full px-3 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent">
+              {(field.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
           ) : field.type === 'textarea' ? (
             <textarea value={editedConfig[field.key] || ''} onChange={(e) => updateField(field.key, e.target.value)} rows={3} className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text font-sans focus:outline-none focus:border-accent resize-y" />
           ) : (
@@ -518,7 +535,7 @@ function BlockEditorInner() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={(e) => setActiveId(e.active.id)} onDragCancel={() => setActiveId(null)}>
-      <div className="h-screen flex flex-col" style={{ background: 'var(--bg, #0a0a0a)', color: 'var(--text, #E8E8E8)' }}>
+      <div className="themed-content h-screen flex flex-col" style={{ background: 'var(--bg, #0a0a0a)', color: 'var(--text, #E8E8E8)', fontFamily: 'var(--font-body, "Space Grotesk", sans-serif)' }}>
         {/* Top bar */}
         <header className="border-b px-6 py-3 flex items-center justify-between shrink-0" style={{ borderColor: 'var(--border, #333333)' }}>
           <div className="flex items-center gap-4">
@@ -612,9 +629,7 @@ function BlockEditorInner() {
               <span className="font-mono uppercase text-xs opacity-50">Live Preview — {theme.mode} mode</span>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ThemeProvider key={tenantSlug} tenantSlug={tenantSlug}>
-                <LivePreview blocks={blocks} tenantSlug={tenantSlug} />
-              </ThemeProvider>
+              <LivePreview blocks={blocks} tenantSlug={tenantSlug} />
             </div>
           </div>
         </div>

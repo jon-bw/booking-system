@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Users, ArrowLeft } from 'lucide-react';
+import { Users, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../api/client.js';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +14,82 @@ function toLocalISOString(date) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+// Lightbox image carousel
+function ImageGallery({ images }) {
+  const [current, setCurrent] = useState(0);
+  
+  const next = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % images.length);
+  }, [images.length]);
+  
+  const prev = useCallback(() => {
+    setCurrent((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
+
+  return (
+    <div className="relative overflow-hidden rounded-lg mb-8">
+      {/* Main image */}
+      <div className="relative aspect-video bg-bg">
+        {images.map((img, i) => (
+          <img
+            key={i}
+            src={img}
+            alt={`Room photo ${i + 1}`}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            style={{ opacity: i === current ? 1 : 0, zIndex: i === current ? 1 : 0 }}
+          />
+        ))}
+        
+        {/* Navigation */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            
+            {/* Dots */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`w-2 h-2 rounded-full transition-all ${i === current ? 'bg-white w-4' : 'bg-white/50'}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-3 overflow-x-auto">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`flex-shrink-0 w-16 h-16 overflow-hidden border-2 transition-colors ${
+                i === current ? 'border-accent' : 'border-transparent hover:border-border'
+              }`}
+            >
+              <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RoomDetailPage() {
   const { tenantSlug, roomId } = useParams();
   const [room, setRoom] = useState(null);
@@ -21,7 +97,7 @@ export default function RoomDetailPage() {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [checking, setChecking] = useState(false);
-  const [available, setAvailable] = useState(null); // true/false/null
+  const [available, setAvailable] = useState(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [booked, setBooked] = useState(false);
@@ -101,6 +177,8 @@ export default function RoomDetailPage() {
     );
   }
 
+  const images = room.images ? (Array.isArray(room.images) ? room.images : JSON.parse(room.images)) : [];
+
   return (
     <main className="max-w-3xl mx-auto px-6 py-8">
       {/* Back link */}
@@ -125,7 +203,13 @@ export default function RoomDetailPage() {
               {formatPrice(room.pricePerHour)}
             </span>
           </div>
+          {room.description && (
+            <p className="mt-4 text-sm text-text-muted">{room.description}</p>
+          )}
         </div>
+
+        {/* Image gallery */}
+        {images.length > 0 && <ImageGallery images={images} />}
 
         <div className="border-t border-border pt-6 space-y-6">
           <h3 className="font-mono uppercase text-xs text-text-muted">Book this room</h3>
@@ -143,7 +227,7 @@ export default function RoomDetailPage() {
                   setBooked(false);
                   setError('');
                 }}
-                className="w-full bg-surface border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent [color-scheme:dark]"
+                className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent [color-scheme:dark]"
               />
             </div>
             <div className="space-y-2">
@@ -157,7 +241,7 @@ export default function RoomDetailPage() {
                   setBooked(false);
                   setError('');
                 }}
-                className="w-full bg-surface border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent [color-scheme:dark]"
+                className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text font-mono focus:outline-none focus:border-accent [color-scheme:dark]"
               />
             </div>
           </div>
@@ -170,7 +254,7 @@ export default function RoomDetailPage() {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Enter your name"
-              className="w-full bg-surface border border-border rounded-full px-4 py-2 text-sm text-text placeholder:text-text-muted font-mono focus:outline-none focus:border-accent"
+              className="w-full bg-bg border border-border rounded-full px-4 py-2 text-sm text-text placeholder:text-text-muted font-mono focus:outline-none focus:border-accent"
             />
           </div>
 
