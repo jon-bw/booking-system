@@ -261,54 +261,7 @@ function ThemeEditorPanel({ tenantSlug }) {
     }
   };
 
-  const applyTemplate = (key) => {
-    if (blocks.length > 0 && !window.confirm('Applying a template will replace all existing blocks. Continue?')) return;
-    const tpl = PAGE_TEMPLATES(key);
-    if (!tpl) return;
-    setApplyingTemplate(true);
 
-    // Apply theme
-    setLocal({
-      colors: { ...tpl.theme.colors },
-      fonts: { ...tpl.theme.fonts },
-      buttonStyle: tpl.theme.buttonStyle,
-      borderRadius: tpl.theme.borderRadius,
-      mode: tpl.theme.mode,
-    });
-    setTheme({
-      colors: { ...tpl.theme.colors },
-      fonts: { ...tpl.theme.fonts },
-      buttonStyle: tpl.theme.buttonStyle,
-      borderRadius: tpl.theme.borderRadius,
-      mode: tpl.theme.mode,
-    });
-
-    // Replace all blocks
-    (async () => {
-      try {
-        // Delete existing blocks first
-        for (const block of blocks) {
-          await api.deletePageBlock(tenantSlug, block.id);
-        }
-
-        // Create new blocks sequentially
-        const createdBlocks = [];
-        for (const [i, blockDef] of tpl.blocks.entries()) {
-          const created = await api.createPageBlock(tenantSlug, {
-            blockType: blockDef.blockType,
-            config: blockDef.config,
-            sortOrder: i,
-          });
-          createdBlocks.push(created.data || created);
-        }
-        setBlocks(createdBlocks);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setApplyingTemplate(false);
-      }
-    })();
-  };
 
   const updateColor = (key, value) => {
     const t = { ...local, colors: { ...local.colors, [key]: value } };
@@ -610,6 +563,36 @@ function BlockEditorInner() {
   const [activeId, setActiveId] = useState(null);
   const [activeTab, setActiveTab] = useState('blocks'); // 'blocks' | 'theme' | 'templates'
   const [applyingTemplate, setApplyingTemplate] = useState(false);
+
+  const applyTemplate = (key) => {
+    if (blocks.length > 0 && !window.confirm('Applying a template will replace all existing blocks. Continue?')) return;
+    const tpl = PAGE_TEMPLATES[key];
+    if (!tpl) return;
+    setApplyingTemplate(true);
+
+    (async () => {
+      try {
+        for (const block of blocks) {
+          await api.deletePageBlock(tenantSlug, block.id);
+        }
+        const createdBlocks = [];
+        for (const [i, blockDef] of tpl.blocks.entries()) {
+          const created = await api.createPageBlock(tenantSlug, {
+            blockType: blockDef.blockType,
+            config: blockDef.config,
+            sortOrder: i,
+          });
+          createdBlocks.push(created.data || created);
+        }
+        setBlocks(createdBlocks);
+        if (tpl.theme) setTheme(tpl.theme);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setApplyingTemplate(false);
+      }
+    })();
+  };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor));
 
